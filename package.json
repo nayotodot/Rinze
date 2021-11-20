@@ -1,0 +1,23 @@
+{
+  "name": "Rinze",
+  "version": "0.1.0",
+  "description": "NotITG v4.2 mods framework",
+  "main": "index.js",
+  "scripts": {
+    "start": "node ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nayotodot/Rinze.git"
+  },
+  "author": "NAYOTO.",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/nayotodot/Rinze/issues"
+  },
+  "homepage": "https://github.com/nayotodot/Rinze#readme",
+  "dependencies": {
+    "luaparse": "^0.3.1",
+    "xmldom": "^0.6.0"
+  }
+}
