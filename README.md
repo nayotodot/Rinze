@@ -39,3 +39,18 @@ end
 
 return t;
 ```
+
+#### import
+
+`import` is same "[require](https://www.lua.org/manual/5.1/manual.html#pdf-require)" module.
+
+```lua
+local test = import "modules.test";		-- Load "./modules/test.lua" file.
+local math = import "math";				-- Load global "math".
+```
+#### functions
+
+- `__LOADED`: Return tables already loaded function.
+- `__PRELOAD`: Return tables already imported module.
+- `__VERSION`: Return current version.
+- `import`: Return already loaded function or imported module, or load lua file.

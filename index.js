@@ -8,7 +8,7 @@ const args = process.argv.slice( 2 );
 const VERSION = process.env.npm_package_version;
 const DEFAULT_XML = "default.xml";
 
-const ALL_IDENT_CHARS = [
+const IDENT_CHARS = [
 	"0", "1", "2", "3", "4", "5", "6", "7", "8", "9",
 	"a", "b", "c", "d", "e", "f", "g", "h", "i", "j",
 	"k", "l", "m", "n", "o", "p", "q", "r", "s", "t",
@@ -17,8 +17,24 @@ const ALL_IDENT_CHARS = [
 	"O", "P", "Q", "R", "S", "T", "U", "V", "W", "X",
 	"Y", "Z", "_"
 ];
-const NUM_ALL_IDENT_CHARS = ALL_IDENT_CHARS.length;
+const NUM_IDENT_CHARS = IDENT_CHARS.length;
 const DEFAULT_INDEX = 10;
+
+function getBaseLog( x, y )
+{
+	return Math.log( y ) / Math.log( x );
+}
+
+function isDefinition( name )
+{
+	return (
+		name === "and"   || name === "break"  || name === "do"     || name === "else"     || name === "elseif" ||
+		name === "end"   || name === "false"  || name === "for"    || name === "function" || name === "if"     ||
+		name === "in"    || name === "local"  || name === "nil"    || name === "not"      || name === "null"   ||
+		name === "or"    || name === "repeat" || name === "return" || name === "then"     || name === "true"   ||
+		name === "until" || name === "while"
+	);
+}
 
 const minimizer = {
 	currentIndex: DEFAULT_INDEX,
@@ -31,32 +47,25 @@ const minimizer = {
 			return this.identMap[name];
 		}
 
-		var newname = "";
-
-		do
+		while( this.currentIndex < Infinity )
 		{
-			var index = this.currentIndex;
-			if( index > NUM_ALL_IDENT_CHARS )
-			{
-				var num = Math.trunc( index / NUM_ALL_IDENT_CHARS ) + DEFAULT_INDEX;
-				index = index % NUM_ALL_IDENT_CHARS;
-				newname = ALL_IDENT_CHARS[num] + ALL_IDENT_CHARS[index];
-			}
-			else
-			{
-				newname = ALL_IDENT_CHARS[index];
-			}
-			this.currentIndex++;
-		}
-		while(
-			newname === "and"   || newname === "break"  || newname === "do"     || newname === "else"     || newname === "elseif" ||
-			newname === "end"   || newname === "false"  || newname === "for"    || newname === "function" || newname === "if"     ||
-			newname === "in"    || newname === "local"  || newname === "nil"    || newname === "not"      || newname === "null"   ||
-			newname === "or"    || newname === "repeat" || newname === "return" || newname === "then"     || newname === "true"   ||
-			newname === "until" || newname === "while"
-		)
+			var newname = "";
+			var currentIndex = this.currentIndex;
+			var length = Math.trunc( getBaseLog( NUM_IDENT_CHARS, currentIndex ) );
 
-		return this.identMap[name] = newname;
+			for( var i = length; i >= 0; i-- )
+			{
+				const index = Math.trunc( currentIndex / (NUM_IDENT_CHARS ** i) ) % NUM_IDENT_CHARS;
+				newname += IDENT_CHARS[index];
+			}
+
+			this.currentIndex++;
+
+			if( isNaN(newname.slice(0,1)) && !isDefinition(newname) )
+			{
+				return this.identMap[name] = newname;
+			}
+		}
 	},
 };
 
@@ -65,27 +74,25 @@ const fmt = {
 
 	joinString( str = "" )
 	{
-		const separate = " ";
 		const regex = /\w/;
-		const first = this.text.slice( -1 ).match( regex );
-		const last = str.slice( 0, 1 ).match( regex );
+		const first = regex.test( this.text.slice(-1) );
+		const last = regex.test( str.slice(0,1) );
 
 		if( first && last )
 		{
-			this.text += separate;
+			this.text += " ";
 		}
 		this.text += str;
 	},
 
 	joinVariables( arr = [] )
 	{
-		const separate = ",";
 		for( var i = 0; i < arr.length; i++ )
 		{
 			this.text = this.find( arr[i] );
 			if( arr[i+1] )
 			{
-				this.text += separate;
+				this.text += ",";
 			}
 		}
 	},
@@ -407,32 +414,43 @@ const fmt = {
 	},
 };
 
+const fsOptions = { encoding: "utf8" };
+const luaparseOptions = {
+	comments: false,
+	scope: true,
+};
+
 {
 	const origPath = path.join( args[0], DEFAULT_XML );
 	const copyPath = origPath + ".old";
 	fs.copyFileSync( origPath, copyPath, fs.constants.COPYFILE_FICLONE );
 
-	const xmlSource = fs.readFileSync( origPath, { encoding: "utf8" } );
+	var xmlSource = fs.readFileSync( origPath, fsOptions );
+
+	if( !xmlSource )
+	{
+		throw "XML load error"
+	}
 
 	const parser = new DOMParser();
-	const doc = parser.parseFromString( xmlSource, "application/xml" );
-	const element = doc?.documentElement;
+	var doc = parser.parseFromString( xmlSource, "application/xml" );
+	var element = doc?.documentElement;
 
-	if( element !== null )
+	if( !element )
 	{
-		const luaSource = "(function(__this)\n"
-						+ fs.readFileSync( "source.lua", { encoding: "utf8" } )
-						+ "\nend)()";
-		const options = {
-			comments: false,
-			scope: true,
-		};
-		const ast = luaparse.parse( luaSource, options );
-		const newLuaSource = "%" + fmt.find( ast ).slice( 1, -3 );
-
-		element?.setAttribute( "InitCommand", newLuaSource );
-
-		const XML = new XMLSerializer();
-		fs.writeFileSync( origPath, XML.serializeToString(doc) );
+		throw "XML parse error"
 	}
+
+	var luaSource = `(function(__this)
+					${fs.readFileSync( "source.lua", fsOptions )}
+					end)()`;
+	luaSource = luaSource?.replace( "__VERSION__", "\"" + VERSION + "\"" );
+
+	var ast = luaparse.parse( luaSource, luaparseOptions );
+	var newLuaSource = "%" + fmt.find( ast ).slice( 1, -3 );
+
+	element?.setAttribute( "InitCommand", newLuaSource );
+
+	const XML = new XMLSerializer();
+	fs.writeFileSync( origPath, XML.serializeToString(doc) );
 }

@@ -93,13 +93,6 @@ local function exist(name,dir)
 	return path;
 end
 
-local function checkerror(f)
-	local status,err = pcall(f);
-	if not status then
-		error(debug.traceback(err));
-	end
-end
-
 local function import(name)
 	local f = rawget(_LOADED,name);
 	if f then
@@ -114,13 +107,13 @@ local function import(name)
 	assert(chunk,debug.traceback(err));
 	local newgt = {
 		_G = _G,
-		_LOADED = _LOADED,
-		_PRELOAD = _PRELOAD,
+		__LOADED = _LOADED,
+		__PRELOAD = _PRELOAD,
+		__VERSION = __VERSION__,
 		import = import,
 	};
 	setmetatable(newgt,_META);
 	setfenv(chunk,newgt);
-	checkerror(chunk);
 	local res = chunk();
 	setfield(_PRELOAD,name,res);
 	return res;
