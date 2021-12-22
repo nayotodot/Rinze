@@ -1,10 +1,10 @@
+local assert,setmetatable,type = assert,setmetatable,type;
+local debug,setmetatable,string,table = debug,setmetatable,string,table;
+local gmatch = string.gmatch or string.gfind;
 assert(
 	GameState.GetVersionDate and tonumber(GAMESTATE:GetVersionDate()) >= 20210420,
 	"Please playing in latest NotITG!"
 );
-local debug,setmetatable,string,table = debug,setmetatable,string,table;
-local gmatch = string.gmatch or string.gfind;
-
 local _G = getfenv(0);
 local _M = {};
 local _LOADED = {};

@@ -20,7 +20,7 @@ const IDENT_CHARS = [
 const NUM_IDENT_CHARS = IDENT_CHARS.length;
 const DEFAULT_INDEX = 10;
 
-function getBaseLog( x, y )
+function logarithm( x, y )
 {
 	return Math.log( y ) / Math.log( x );
 }
@@ -51,7 +51,7 @@ const minimizer = {
 		{
 			var newname = "";
 			var currentIndex = this.currentIndex;
-			var length = Math.trunc( getBaseLog( NUM_IDENT_CHARS, currentIndex ) );
+			var length = Math.trunc( logarithm( NUM_IDENT_CHARS, currentIndex ) );
 
 			for( var i = length; i >= 0; i-- )
 			{
@@ -423,13 +423,21 @@ const luaparseOptions = {
 {
 	const origPath = path.join( args[0], DEFAULT_XML );
 	const copyPath = origPath + ".old";
-	fs.copyFileSync( origPath, copyPath, fs.constants.COPYFILE_FICLONE );
 
-	var xmlSource = fs.readFileSync( origPath, fsOptions );
-
-	if( !xmlSource )
+	let xmlSource;
+	if( fs.existsSync(origPath) )
 	{
-		throw "XML load error"
+		fs.copyFileSync( origPath, copyPath, fs.constants.COPYFILE_FICLONE );
+
+		xmlSource = fs.readFileSync( origPath, fsOptions );
+		if( !xmlSource )
+		{
+			throw "XML load error"
+		}
+	}
+	else
+	{
+		xmlSource = "<ActorFrame><children>\n\n</children></ActorFrame>";
 	}
 
 	const parser = new DOMParser();
