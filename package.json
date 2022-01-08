@@ -17,7 +17,7 @@
   },
   "homepage": "https://github.com/nayotodot/Rinze#readme",
   "dependencies": {
-    "luaparse": "^0.3.1",
-    "xmldom": "^0.6.0"
+    "@xmldom/xmldom": "^0.8.0",
+    "luaparse": "^0.3.1"
   }
 }
