@@ -5,7 +5,8 @@ const fs = require( "fs" );
 const path = require( "path" );
 const args = process.argv.slice( 2 );
 
-const VERSION = process.env.npm_package_version;
+const NPM_PACKAGE_NAME = process.env.npm_package_name;
+const NPM_PACKAGE_VERSION = process.env.npm_package_version;
 const DEFAULT_XML = "default.xml";
 
 const IDENT_CHARS = [
@@ -452,7 +453,8 @@ const luaparseOptions = {
 	var luaSource = `(function(__this)
 					${fs.readFileSync( "source.lua", fsOptions )}
 					end)()`;
-	luaSource = luaSource?.replace( "__VERSION__", "\"" + VERSION + "\"" );
+	luaSource = luaSource?.replace( "__NAME__", "\"" + NPM_PACKAGE_NAME + "\"" );
+	luaSource = luaSource?.replace( "__VERSION__", "\"" + NPM_PACKAGE_VERSION + "\"" );
 
 	var ast = luaparse.parse( luaSource, luaparseOptions );
 	var newLuaSource = "%" + fmt.find( ast ).slice( 1, -3 );

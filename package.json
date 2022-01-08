@@ -1,6 +1,6 @@
 {
   "name": "Rinze",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "NotITG mods framework.",
   "main": "index.js",
   "scripts": {
